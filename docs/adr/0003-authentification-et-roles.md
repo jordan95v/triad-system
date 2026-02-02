@@ -12,7 +12,7 @@ L’application est interne mais utilisée par des profils différents :
 Il faut sécuriser l’accès aux données, et filtrer les vues selon le rôle.
 
 ## Décision
-- Authentification API via **JWT** (DRF + `djangorestframework-simplejwt`)
+- Authentification API via **JWT**
 - Gestion des rôles via :
   - soit `Group`/`Permission` Django,
   - soit un champ `role` sur le modèle utilisateur (enum).
@@ -24,8 +24,8 @@ Il faut sécuriser l’accès aux données, et filtrer les vues selon le rôle.
 ## Justification
 - JWT est simple à déployer en conteneurs (pas de session server-side obligatoire).
 - Compatible avec un front séparé (Angular).
-- Permet de migrer plus tard vers SSO/OIDC sans refaire toute l’app (on remplacera l’émetteur de token).
+- Permet de migrer plus tard vers SSO/OIDC sans refaire toute l’app.
 
 ## Conséquences
-- Gestion du refresh token à prévoir (ou durée courte + relog).
+- Gestion du refresh token à prévoir.
 - Les endpoints doivent être protégés par permissions DRF cohérentes.

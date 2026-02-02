@@ -1,4 +1,4 @@
-    # ADR 0002 — Architecture backend modulaire orientée domaine (Django apps)
+# ADR 0002 — Architecture backend modulaire orientée domaine (Django apps)
 
 ## Statut
 Accepté
@@ -8,8 +8,8 @@ Le backend devra gérer :
 - règles métier de réservation (slots, limites, conflits),
 - check-in QR + libération automatique à 11h,
 - historisation complète,
-- administration support (secrétaires),
-- statistiques (dashboard manager),
+- administration support,
+- statistiques,
 - publication de messages vers une queue.
 
 Sans structuration, le projet Django risque de devenir monolithique et illisible.

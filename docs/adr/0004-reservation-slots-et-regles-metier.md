@@ -9,12 +9,12 @@ La réservation se fait en **demi-journées** et doit :
 - permettre aux managers de réserver jusqu’à 30 jours,
 - gérer le besoin de charge (rangées A/F),
 - gérer les conflits place/date/slot,
-- supporter la libération automatique à 11h (no-show).
+- supporter la libération automatique à 11h.
 
-Une modélisation “réservation = intervalle de dates” devient vite ambiguë avec AM/PM, check-in, libération à 11h, etc.
+Une modélisation réservation = intervalle de dates devient vite ambiguë avec AM/PM, check-in, libération à 11h, etc...
 
 ## Décision
-- Une “réservation” est un objet regroupant plusieurs **slots**.
+- Une réservation est un objet regroupant plusieurs **slots**.
 - Table `Reservation` (auteur, meta, dates demandées, etc.)
 - Table `ReservationSlot` :
   - `date`
@@ -32,5 +32,5 @@ Contraintes :
 - Les stats (occupation, no-show) se calculent directement sur les slots.
 
 ## Conséquences
-- Plus de lignes en base (normal), mais c’est maîtrisé (60 places * slots/jour).
-- Doit définir clairement les horaires AM/PM (à figer en sprint 2).
+- Plus de lignes en base, mais maitrisé.
+- Doit définir clairement les horaires AM/PM.

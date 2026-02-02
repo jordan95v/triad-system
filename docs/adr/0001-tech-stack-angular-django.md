@@ -15,15 +15,15 @@ L’application doit :
 - Frontend : **Angular**
 - Backend : **Django + Django REST Framework (DRF)**
 - Base de données : **PostgreSQL**
-- Admin back-office : **Django Admin** (personnalisé si besoin)
+- Admin back-office : **Django Admin**
 
 ## Justification
-- Angular est adapté aux applications “entreprise” : architecture modulaire, routing/guards, formulaires réactifs, maintenabilité.
+- Angular est adapté aux applications entreprise: architecture modulaire, routing/guards, formulaires réactifs, maintenabilité.
 - Django apporte rapidement une base robuste + un admin natif très utile au profil secrétaire (gain de temps énorme).
 - DRF standardise l’API REST avec permissions/serializers.
-- PostgreSQL est le choix classique pour la fiabilité, l’historisation et les requêtes analytics (dashboard).
+- PostgreSQL est le choix classique pour la fiabilité, l’historisation et les requêtes analytics.
 
 ## Conséquences
 - Le contrat API doit être cadré (DTO, versioning, erreurs).
-- Nécessite une rigueur sur la gestion des rôles/permissions.
-- Prépare une intégration SSO future (OIDC) sans l’implémenter tout de suite.
+- Nécessite gestion des rôles/permissions.
+- Prépare une intégration SSO future sans l’implémenter tout de suite.
