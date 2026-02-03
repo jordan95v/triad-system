@@ -13,170 +13,82 @@ import { AuthService } from "../../services/auth.service"
 
 @Component({
   selector: "app-reserve",
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule],
   template: `
-    <div class="container">
-      <h1>🅿️ Reserve Parking Spot</h1>
+    <div>
+      <h2>Reserve Parking Spot</h2>
 
-      <div class="card">
-        <form [formGroup]="reservationForm" (ngSubmit)="onSubmit()">
-          <div class="form-group">
-            <label for="date">Reservation Date *</label>
+      <form [formGroup]="reservationForm" (ngSubmit)="onSubmit()">
+        <div>
+          <label
+            >Date:
             <input
               type="date"
-              id="date"
               formControlName="date"
               [min]="minDate()"
               [max]="maxDate()"
-              required
-            />
-            @if (dateControl.touched && dateControl.invalid) {
-              <small class="error">Please select a valid date</small>
-            }
-          </div>
+          /></label>
+        </div>
 
-          <div class="form-group">
-            <label>
-              <input type="checkbox" formControlName="needsElectric" />
-              I need an electric charging spot
-            </label>
-          </div>
+        <div>
+          <label
+            ><input type="checkbox" formControlName="needsElectric" /> Electric spot
+            needed</label
+          >
+        </div>
 
-          <div class="form-group">
-            <label for="spot">Available Spots</label>
+        <div>
+          <label
+            >Spot:
             @if (loadingSpots()) {
-              <p>Loading available spots...</p>
-            } @else if (availableSpots().length === 0) {
-              <p class="no-spots">No spots available for this date.</p>
+              <span>Loading...</span>
             } @else {
-              <select id="spot" formControlName="spotId" required>
-                <option value="">-- Select a spot --</option>
+              <select formControlName="spotId">
+                <option value="">-- Select --</option>
                 @for (spot of availableSpots(); track spot.id) {
                   <option [value]="spot.id">
-                    {{ spot.id }} - Row {{ spot.row }}
+                    {{ spot.id }}
                     @if (spot.is_electric) {
-                      ⚡
+                      (Electric)
                     }
                   </option>
                 }
               </select>
-              @if (spotControl.touched && spotControl.invalid) {
-                <small class="error">Please select a parking spot</small>
-              }
             }
-          </div>
+          </label>
+        </div>
 
-          @if (errorMessage()) {
-            <div class="alert alert-error">{{ errorMessage() }}</div>
-          }
+        @if (errorMessage()) {
+          <p style="color: red;">{{ errorMessage() }}</p>
+        }
+        @if (successMessage()) {
+          <p style="color: green;">{{ successMessage() }}</p>
+        }
 
-          @if (successMessage()) {
-            <div class="alert alert-success">{{ successMessage() }}</div>
-          }
+        <button type="submit" [disabled]="!reservationForm.valid || submitting()">
+          Reserve
+        </button>
+        <button type="button" (click)="goBack()">Cancel</button>
+      </form>
 
-          <div class="actions">
-            <button
-              type="submit"
-              class="btn btn-primary"
-              [disabled]="!reservationForm.valid || submitting()"
-            >
-              @if (submitting()) {
-                Reserving...
-              } @else {
-                Reserve Spot
-              }
-            </button>
-            <button type="button" class="btn btn-secondary" (click)="goBack()">
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div class="info-card card">
-        <h3>ℹ️ Reservation Rules</h3>
-        <ul>
-          <li>Reservations can be made for up to 5 working days</li>
-          <li>Electric spots (rows A & F) have charging capabilities</li>
-          <li>Please check-in by 11 AM on your reservation day</li>
-          <li>Unreserved spots may be released after 11 AM</li>
-        </ul>
-      </div>
+      <p><small>Max 5 days in advance. Electric spots: rows A & F.</small></p>
     </div>
   `,
   styles: [
     `
-      .form-group {
-        margin-bottom: 1.5rem;
+      div {
+        padding: 20px;
       }
-      .form-group label {
+      label {
         display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
+        margin: 10px 0;
       }
-      .form-group input[type="date"],
-      .form-group select {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid var(--border);
-        border-radius: 0.375rem;
-        font-size: 1rem;
+      input,
+      select {
+        margin: 5px;
       }
-      .form-group input[type="checkbox"] {
-        width: auto;
-        margin-right: 0.5rem;
-      }
-      .error {
-        color: var(--danger);
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-        display: block;
-      }
-      .no-spots {
-        color: var(--text-secondary);
-        font-style: italic;
-      }
-      .alert {
-        padding: 1rem;
-        border-radius: 0.375rem;
-        margin-bottom: 1rem;
-      }
-      .alert-error {
-        background: rgba(239, 68, 68, 0.1);
-        color: var(--danger);
-        border: 1px solid var(--danger);
-      }
-      .alert-success {
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--success);
-        border: 1px solid var(--success);
-      }
-      .actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 2rem;
-      }
-      .btn-secondary {
-        background: var(--background);
-        color: var(--text);
-        border: 1px solid var(--border);
-      }
-      .btn-secondary:hover {
-        background: var(--surface);
-      }
-      .info-card {
-        margin-top: 2rem;
-      }
-      .info-card h3 {
-        margin-bottom: 1rem;
-      }
-      .info-card ul {
-        list-style-position: inside;
-        color: var(--text-secondary);
-      }
-      .info-card li {
-        margin-bottom: 0.5rem;
+      button {
+        margin: 5px;
       }
     `,
   ],

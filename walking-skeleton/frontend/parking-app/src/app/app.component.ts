@@ -1,46 +1,27 @@
-import { Component, ChangeDetectionStrategy, inject } from "@angular/core"
-import { RouterOutlet, RouterLink, RouterLinkActive } from "@angular/router"
+import { Component, inject } from "@angular/core"
+import { RouterOutlet, RouterLink } from "@angular/router"
 import { AuthService } from "./services/auth.service"
 
 @Component({
   selector: "app-root",
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink],
   template: `
     @if (auth.isLoggedIn()) {
-      <nav class="nav">
-        <a routerLink="/parking" routerLinkActive="active">🅿️ Parking</a>
-        <a routerLink="/reserve" routerLinkActive="active">➕ Reserve</a>
-        <a routerLink="/my-reservations" routerLinkActive="active"
-          >📋 My Reservations</a
+      <div style="background: #eee; padding: 10px; border-bottom: 1px solid #ccc;">
+        <a routerLink="/parking">Parking</a> | <a routerLink="/reserve">Reserve</a> |
+        <a routerLink="/my-reservations">My Reservations</a>
+        <span style="float: right;"
+          >{{ auth.currentUser() }} |
+          <a href="#" (click)="auth.logout()">Logout</a></span
         >
-        <span class="spacer"></span>
-        <span class="username">{{ auth.currentUser() }}</span>
-        <button class="btn btn-sm" (click)="auth.logout()">Logout</button>
-      </nav>
+      </div>
     }
-    <main>
-      <router-outlet />
-    </main>
+    <router-outlet />
   `,
   styles: [
     `
-      :host {
-        display: block;
-        min-height: 100vh;
-      }
-      main {
-        padding: 2rem;
-      }
-      .spacer {
-        flex: 1;
-      }
-      .username {
-        color: var(--text-secondary);
-      }
-      .btn-sm {
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
+      a {
+        margin: 0 5px;
       }
     `,
   ],

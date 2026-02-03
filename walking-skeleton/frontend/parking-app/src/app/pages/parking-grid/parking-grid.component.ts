@@ -1,173 +1,61 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  signal,
-  inject,
-  OnInit,
-} from "@angular/core"
+import { Component, signal, inject, OnInit } from "@angular/core"
 import { Router } from "@angular/router"
 import { FormsModule } from "@angular/forms"
 import { ParkingService, ParkingSpot } from "../../services/parking.service"
 
 @Component({
   selector: "app-parking-grid",
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule],
   template: `
-    <div class="container">
-      <div class="header">
-        <h1>Parking Overview</h1>
-        <button class="btn btn-primary" (click)="goToReserve()">
-          ➕ New Reservation
-        </button>
-      </div>
+    <div>
+      <h2>Parking Overview</h2>
+      <button (click)="goToReserve()">New Reservation</button>
 
-      <div class="controls card">
-        <label>
-          View Date:
+      <div>
+        <label
+          >Date:
           <input
             type="date"
             [ngModel]="selectedDate()"
             (ngModelChange)="onDateChange($event)"
-          />
-        </label>
-        <div class="legend">
-          <span class="legend-item"><span class="dot available"></span> Available</span>
-          <span class="legend-item"><span class="dot reserved"></span> Reserved</span>
-          <span class="legend-item"><span class="dot electric"></span> Electric</span>
-        </div>
+        /></label>
       </div>
 
       @if (loading()) {
-        <p class="text-center">Loading...</p>
+        <p>Loading...</p>
       } @else {
-        <div class="parking-layout">
+        <table border="1" cellpadding="5">
           @for (row of rows; track row) {
-            <div class="parking-row">
-              <div class="row-label">{{ row }}</div>
+            <tr>
+              <td>
+                <b>{{ row }}</b>
+              </td>
               @for (spot of getSpotsByRow(row); track spot.id) {
-                <div
-                  class="parking-spot"
-                  [class.reserved]="!spot.is_available"
-                  [class.electric]="spot.is_electric"
-                  [attr.aria-label]="
-                    'Spot ' + spot.id + (spot.is_available ? ' available' : ' reserved')
-                  "
+                <td
+                  [style.background-color]="spot.is_available ? '#90EE90' : '#FFB6C1'"
+                  [style.font-weight]="spot.is_electric ? 'bold' : 'normal'"
                 >
                   {{ spot.id }}
-                </div>
+                </td>
               }
-            </div>
+            </tr>
           }
-        </div>
+        </table>
+        <p><small>Green=Available, Pink=Reserved, Bold=Electric</small></p>
       }
-
-      <div class="info card">
-        <p>
-          📅 Showing availability for {{ selectedDate() }}. Use the "New Reservation"
-          button to book a spot.
-        </p>
-      </div>
     </div>
   `,
   styles: [
     `
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
+      div {
+        padding: 20px;
       }
-      .header h1 {
-        margin: 0;
+      table {
+        margin-top: 10px;
       }
-      .controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 2rem;
-      }
-      .controls label {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      .controls input {
-        width: auto;
-      }
-      .legend {
-        display: flex;
-        gap: 1.5rem;
-      }
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-      }
-      .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 4px;
-      }
-      .dot.available {
-        background: var(--success);
-      }
-      .dot.reserved {
-        background: var(--danger);
-      }
-      .dot.electric {
-        background: var(--success);
-        border: 2px solid var(--electric);
-      }
-      .parking-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      .parking-row {
-        display: flex;
-        gap: 0.5rem;
-      }
-      .row-label {
-        width: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.25rem;
-        color: var(--text-secondary);
-      }
-      .parking-spot {
-        flex: 1;
-        min-width: 60px;
-        aspect-ratio: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid var(--border);
-        border-radius: 0.375rem;
-        font-weight: 600;
-        font-size: 0.875rem;
-        background: var(--success);
-        color: white;
-        cursor: default;
-      }
-      .parking-spot.reserved {
-        background: var(--danger);
-        opacity: 0.6;
-      }
-      .parking-spot.electric {
-        border-color: var(--electric);
-        border-width: 3px;
-      }
-      .info {
-        margin-top: 1.5rem;
+      td {
         text-align: center;
-        color: var(--text-secondary);
+        min-width: 40px;
       }
     `,
   ],
