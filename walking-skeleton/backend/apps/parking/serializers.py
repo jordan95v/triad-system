@@ -5,8 +5,6 @@ from .models import ParkingSpot, Reservation
 
 
 class ParkingSpotSerializer(serializers.ModelSerializer):
-    """Serializer for parking spots with availability status."""
-
     is_available = serializers.SerializerMethodField()
 
     class Meta:
@@ -14,7 +12,6 @@ class ParkingSpotSerializer(serializers.ModelSerializer):
         fields = ["id", "row", "number", "is_electric", "is_available"]
 
     def get_is_available(self, obj):
-        """Check if spot is available today."""
         today = timezone.now().date()
         return not obj.reservations.filter(
             date=today, status__in=["CONFIRMED", "CHECKED_IN"]
@@ -22,8 +19,6 @@ class ParkingSpotSerializer(serializers.ModelSerializer):
 
 
 class ReservationSerializer(serializers.ModelSerializer):
-    """Serializer for reservations with business rule validation."""
-
     user = serializers.StringRelatedField(read_only=True)
     spot_id = serializers.CharField(source="spot.id", read_only=True)
 
@@ -45,15 +40,11 @@ class ReservationSerializer(serializers.ModelSerializer):
         }
 
     def validate_date(self, value):
-        """Validate reservation date follows business rules."""
         today = timezone.now().date()
 
-        # Cannot reserve in the past
         if value < today:
             raise serializers.ValidationError("Cannot reserve a spot in the past.")
 
-        # Maximum 5 days in advance (for employees)
-        # Note: Manager check would be done in the view
         max_date = today + timedelta(days=5)
         if value > max_date:
             raise serializers.ValidationError(
@@ -63,12 +54,10 @@ class ReservationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        """Validate spot is available for the requested date."""
         spot = data.get("spot")
         date = data.get("date")
 
         if spot and date:
-            # Check if spot is already reserved for this date
             existing = Reservation.objects.filter(
                 spot=spot, date=date, status__in=["CONFIRMED", "CHECKED_IN"]
             ).exists()

@@ -2,7 +2,7 @@
 
 from apps.parking.models import ParkingSpot
 
-rows = ['A', 'B', 'C', 'D', 'E', 'F']
+rows = ["A", "B", "C", "D", "E", "F"]
 
 for row in rows:
     for num in range(1, 11):
@@ -10,9 +10,9 @@ for row in rows:
         ParkingSpot.objects.get_or_create(
             id=spot_id,
             defaults={
-                'row': row,
-                'number': num,
-            }
+                "row": row,
+                "number": num,
+            },
         )
         print(f"Created spot {spot_id}")
 
