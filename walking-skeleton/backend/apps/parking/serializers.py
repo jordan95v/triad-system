@@ -40,6 +40,9 @@ class ReservationSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["user", "status", "check_in_time", "created_at"]
+        extra_kwargs = {
+            'spot': {'error_messages': {'does_not_exist': 'Invalid parking spot ID.'}}
+        }
 
     def validate_date(self, value):
         """Validate reservation date follows business rules."""
@@ -78,5 +81,10 @@ class ReservationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        validated_data["user"] = self.context["request"].user
+        user = self.context["request"].user
+        if user.is_anonymous:
+            raise serializers.ValidationError(
+                "Authentication required. Please login first."
+            )
+        validated_data["user"] = user
         return super().create(validated_data)
