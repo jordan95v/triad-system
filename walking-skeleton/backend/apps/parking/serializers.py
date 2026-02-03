@@ -41,7 +41,7 @@ class ReservationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["user", "status", "check_in_time", "created_at"]
         extra_kwargs = {
-            'spot': {'error_messages': {'does_not_exist': 'Invalid parking spot ID.'}}
+            "spot": {"error_messages": {"does_not_exist": "Invalid parking spot ID."}}
         }
 
     def validate_date(self, value):
