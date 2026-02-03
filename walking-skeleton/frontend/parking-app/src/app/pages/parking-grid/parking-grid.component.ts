@@ -64,8 +64,8 @@ import { ParkingService, ParkingSpot } from "../../services/parking.service"
 
       <div class="info card">
         <p>
-          📅 Showing availability for {{ selectedDate() }}. Use the "New Reservation" button
-          to book a spot.
+          📅 Showing availability for {{ selectedDate() }}. Use the "New Reservation"
+          button to book a spot.
         </p>
       </div>
     </div>
