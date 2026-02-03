@@ -7,7 +7,6 @@ import {
   computed,
 } from "@angular/core"
 import { Router } from "@angular/router"
-import { DatePipe } from "@angular/common"
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms"
 import { ParkingService, ParkingSpot } from "../../services/parking.service"
 import { AuthService } from "../../services/auth.service"
@@ -15,7 +14,7 @@ import { AuthService } from "../../services/auth.service"
 @Component({
   selector: "app-reserve",
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, ReactiveFormsModule],
+  imports: [ReactiveFormsModule],
   template: `
     <div class="container">
       <h1>🅿️ Reserve Parking Spot</h1>

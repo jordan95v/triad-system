@@ -225,12 +225,3 @@ export class ParkingGridComponent implements OnInit {
     this.router.navigate(["/reserve"])
   }
 }
-        this.loadSpots()
-      },
-      error: (err) => {
-        this.message.set(`❌ Error: ${err.error?.detail || "Unable to book"}`)
-        this.messageType.set("error")
-      },
-    })
-  }
-}
