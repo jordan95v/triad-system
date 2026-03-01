@@ -36,4 +36,18 @@ export const routes: Routes = [
     loadComponent: () =>
       import("./pages/qr/qr.component").then((m) => m.QrComponent),
   },
+  {
+    path: "admin-reservations",
+    loadComponent: () =>
+      import("./pages/admin-reservations/admin-reservations.component").then(
+        (m) => m.AdminReservationsComponent
+      ),
+  },
+  {
+    path: "stats",
+    loadComponent: () =>
+      import("./pages/manager-stats/manager-stats.component").then(
+        (m) => m.ManagerStatsComponent
+      ),
+  },
 ]

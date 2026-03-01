@@ -8,6 +8,12 @@ export class AuthService {
 
   readonly currentUser = computed(() => this.user())
   readonly isLoggedIn = computed(() => this.user() !== null)
+  readonly role = computed(() => (this.user() ?? "employee") as "employee" | "manager" | "secretary")
+
+  readonly isEmployee = computed(() => this.role() === "employee")
+  readonly isManager = computed(() => this.role() === "manager")
+  readonly isSecretary = computed(() => this.role() === "secretary")
+  readonly isStaffLike = computed(() => this.isManager() || this.isSecretary())
 
   constructor() {
     const stored = sessionStorage.getItem("user")

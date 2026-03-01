@@ -25,6 +25,21 @@ export interface Reservation {
   created_at: string
 }
 
+export interface StatsResponse {
+  from: string
+  to: string
+  total_reservations: number
+  by_status: {
+    CONFIRMED: number
+    CHECKED_IN: number
+    CANCELLED: number
+    EXPIRED: number
+  }
+  occupancy_rate: number
+  no_show_rate: number
+  electric_rate: number
+  by_slot: { AM: number; PM: number }
+}
 
 @Injectable({ providedIn: "root" })
 export class ParkingService {
@@ -86,5 +101,22 @@ export class ParkingService {
       { spot: spotId, date, slot },
       { headers: this.getHeaders() }
     )
+  }
+
+  getAdminReservations(): Observable<Reservation[]> {
+    return this.http.get<Reservation[]>(`${this.baseUrl}/reservations/admin/`, {
+      headers: this.getHeaders(),
+    })
+  }
+
+  getStats(params?: { from?: string; to?: string }): Observable<StatsResponse> {
+    const query =
+      params?.from || params?.to
+        ? `?${params.from ? `from=${params.from}` : ""}${params.from && params.to ? "&" : ""}${params.to ? `to=${params.to}` : ""}`
+        : ""
+
+    return this.http.get<StatsResponse>(`${this.baseUrl}/reservations/stats/${query}`, {
+      headers: this.getHeaders(),
+    })
   }
 }

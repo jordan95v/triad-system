@@ -34,6 +34,22 @@
                 <li class="nav-item">
                     <a class="nav-link" routerLink="/qr" routerLinkActive="active">QR</a>
                 </li>
+
+                @if (auth.isStaffLike()) {
+                <li class="nav-item">
+                    <a class="nav-link" routerLink="/admin-reservations" routerLinkActive="active">
+                        Admin
+                    </a>
+                </li>
+                }
+
+                @if (auth.isManager()) {
+                <li class="nav-item">
+                    <a class="nav-link" routerLink="/stats" routerLinkActive="active">
+                        Stats
+                    </a>
+                </li>
+                }
             </ul>
 
             <div class="d-flex align-items-center gap-2">

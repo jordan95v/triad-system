@@ -2,7 +2,11 @@
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <div>
             <h2 class="mb-1">Reserve Parking Spot</h2>
-            <div class="text-muted small">Max 5 days in advance. Electric spots: rows A & F.</div>
+            <div class="text-muted small">
+                @if (authService.role() === 'manager') { Max 60 days in advance. }
+                @else if (authService.role() === 'secretary') { Max 30 days in advance. }
+                @else { Max 5 days in advance. }
+            </div>
         </div>
 
         <button class="btn btn-outline-secondary" type="button" (click)="goBack()">
@@ -18,7 +22,11 @@
                     <label for="date" class="form-label fw-semibold">Date</label>
                     <input id="date" class="form-control" type="date" formControlName="date" [min]="minDate()"
                         [max]="maxDate()" />
-                    <div class="form-text">Choose a date between today and +5 days.</div>
+                    <div class="form-text">
+                        @if (authService.role() === 'manager') { Choose a date between today and +60 days. }
+                        @else if (authService.role() === 'secretary') { Choose a date between today and +30 days. }
+                        @else { Choose a date between today and +5 days. }
+                    </div>
                 </div>
 
                 <!-- Morrning/Afternoon -->

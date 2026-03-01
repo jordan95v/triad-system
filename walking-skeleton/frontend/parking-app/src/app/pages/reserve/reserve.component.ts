@@ -12,7 +12,7 @@ import { AuthService } from "../../services/auth.service"
 })
 export class ReserveComponent implements OnInit {
   private readonly parkingService = inject(ParkingService)
-  private readonly authService = inject(AuthService)
+  readonly authService = inject(AuthService)
   private readonly router = inject(Router)
 
   readonly reservationForm = new FormGroup({
@@ -32,7 +32,11 @@ export class ReserveComponent implements OnInit {
   readonly maxDate = computed(() => {
     const today = new Date()
     const max = new Date(today)
-    max.setDate(today.getDate() + 5)
+
+    const role = this.authService.role()
+    const days = role === "manager" ? 60 : role === "secretary" ? 30 : 5
+
+    max.setDate(today.getDate() + days)
     return max.toISOString().split("T")[0]
   })
 
