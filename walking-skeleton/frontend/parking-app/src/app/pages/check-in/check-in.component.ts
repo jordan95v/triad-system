@@ -4,29 +4,7 @@ import { AuthService } from "../../services/auth.service"
 
 @Component({
   selector: "app-check-in",
-  template: `
-    <div>
-      @if (loading()) {
-        <h2>Check-in...</h2>
-        <p>Spot {{ spotId() }}</p>
-      } @else if (success()) {
-        <h2>Check-in OK!</h2>
-        <p>Spot {{ spotId() }}</p>
-        <p>User: {{ userName() }}</p>
-      } @else {
-        <h2>Check-in failed</h2>
-        <p>{{ errorMessage() }}</p>
-      }
-      <p><a href="/parking">Back</a></p>
-    </div>
-  `,
-  styles: [
-    `
-      div {
-        padding: 20px;
-      }
-    `,
-  ],
+  templateUrl: "./check-in.component.html",
 })
 export class CheckInComponent implements OnInit {
   private readonly parkingService = inject(ParkingService)

@@ -1,14 +1,15 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from django.db import transaction, IntegrityError
+from django.db.models import Count
 from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .models import ParkingSpot, Reservation
-from .serializers import ParkingSpotSerializer, ReservationSerializer
+from .models import Reservation, ParkingSpot
+from .permissions import IsManager, IsStaffLike
+from .serializers import ReservationSerializer, ParkingSpotSerializer
 
 
 class ParkingSpotViewSet(viewsets.ReadOnlyModelViewSet):
@@ -48,73 +49,71 @@ class ParkingSpotViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ReservationViewSet(viewsets.ModelViewSet):
     serializer_class = ReservationSerializer
-    permission_classes = [AllowAny]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated:
-            if user.is_staff:
-                return Reservation.objects.all()
+        if not user.is_authenticated:
+            return Reservation.objects.none()
+        role = getattr(user, "role", "employee")
+        if role == "employee":
             return Reservation.objects.filter(user=user)
-        return Reservation.objects.none()
 
-    @action(detail=False, methods=["post"], url_path="check-in/(?P<spot_id>[^/.]+)")
-    def check_in(self, request, spot_id=None):
-        today = timezone.now().date()
+        return Reservation.objects.filter(user=user)
 
-        now = timezone.localtime()
-        slot = "AM" if now.hour < 12 else "PM"
+    @action(detail=False, methods=["get"], url_path="admin", permission_classes=[IsStaffLike])
+    def admin_list(self, request):
+        qs = Reservation.objects.all().order_by("-date", "slot", "spot_id")
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
 
-        try:
-            reservation = Reservation.objects.get(
-                spot_id=spot_id,
-                date=today,
-                slot=slot,
-                status="CONFIRMED",
-            )
-            reservation.status = "CHECKED_IN"
-            reservation.check_in_time = timezone.now()
-            reservation.save()
+    @action(detail=False, methods=["get"], url_path="stats", permission_classes=[IsManager])
+    def stats(self, request):
+        today = timezone.localdate()
 
-            return Response({"status": "checked_in", "spot": spot_id, "slot": slot, "user": reservation.user.username})
-        except Reservation.DoesNotExist:
-            return Response(
-                {"error": f"No active reservation found for this spot today ({slot})."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-    @action(detail=True, methods=["post"])
-    def cancel(self, request, pk=None):
-        reservation = self.get_object()
-        if reservation.status != "CANCELLED":
-            reservation.status = "CANCELLED"
-            reservation.save()
-            return Response({"status": "cancelled"})
-        return Response({"status": "already cancelled"}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=["post"])
-    def restore(self, request, pk=None):
-        reservation = self.get_object()
-
-        if reservation.status != "CANCELLED":
-            return Response({"error": "Only cancelled reservations can be restored."},
-                            status=status.HTTP_400_BAD_REQUEST)
+        from_str = request.query_params.get("from")
+        to_str = request.query_params.get("to")
 
         try:
-            with transaction.atomic():
-                conflict = Reservation.objects.filter(
-                    spot=reservation.spot,
-                    date=reservation.date,
-                    slot=reservation.slot,
-                    status__in=["CONFIRMED", "CHECKED_IN"],
-                ).exists()
+            date_from = datetime.strptime(from_str, "%Y-%m-%d").date() if from_str else (today - timedelta(days=6))
+            date_to = datetime.strptime(to_str, "%Y-%m-%d").date() if to_str else today
+        except ValueError:
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
 
-                if conflict:
-                    return Response({"error": "Spot is already reserved."}, status=status.HTTP_409_CONFLICT)
+        qs = Reservation.objects.filter(date__gte=date_from, date__lte=date_to)
 
-                reservation.status = "CONFIRMED"
-                reservation.save()
+        total = qs.count()
+        expired = qs.filter(status="EXPIRED").count()
+        checked_in = qs.filter(status="CHECKED_IN").count()
+        cancelled = qs.filter(status="CANCELLED").count()
+        confirmed = qs.filter(status="CONFIRMED").count()
 
-            return Response({"status": "restored"})
-        except IntegrityError:
-            return Response({"error": "Spot is already reserved."}, status=status.HTTP_409_CONFLICT)
+        electric_total = qs.filter(spot__is_electric=True).count()
+
+        days = (date_to - date_from).days + 1
+        capacity = 60 * 2 * days
+
+        occupancy_rate = (total / capacity) if capacity else 0
+        no_show_rate = (expired / total) if total else 0
+        electric_rate = (electric_total / total) if total else 0
+
+        split = qs.values("slot").annotate(count=Count("id"))
+        split_map = {item["slot"]: item["count"] for item in split}
+
+        return Response({
+            "from": str(date_from),
+            "to": str(date_to),
+            "total_reservations": total,
+            "by_status": {
+                "CONFIRMED": confirmed,
+                "CHECKED_IN": checked_in,
+                "CANCELLED": cancelled,
+                "EXPIRED": expired,
+            },
+            "occupancy_rate": occupancy_rate,
+            "no_show_rate": no_show_rate,
+            "electric_rate": electric_rate,
+            "by_slot": {
+                "AM": split_map.get("AM", 0),
+                "PM": split_map.get("PM", 0),
+            },
+        })
