@@ -1,0 +1,48 @@
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+        <h2 class="mb-1">QR / Check-in links</h2>
+        <div class="text-muted small">
+            Print this page and place one QR per spot (demo mode: links).
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" type="button" (click)="print()">
+            Print
+        </button>
+        <a class="btn btn-outline-primary" routerLink="/parking">Back</a>
+    </div>
+</div>
+
+@if (loading()) {
+<div class="d-flex align-items-center gap-2">
+    <div class="spinner-border" role="status" aria-hidden="true"></div>
+    <span>Loading spots...</span>
+</div>
+} @else {
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="row g-2">
+            @for (spot of spots(); track spot.id) {
+            <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                <div class="border rounded p-2 text-center">
+                    <div class="fw-semibold mb-1">
+                        {{ spot.id }}
+                        @if (spot.is_electric) { <span class="badge text-bg-info ms-1">Elec</span> }
+                    </div>
+
+                    <!-- Lien check-in (ça simule le QR) -->
+                    <a class="btn btn-sm btn-dark w-100" [href]="checkInUrl(spot.id)">
+                        Open check-in
+                    </a>
+
+                    <div class="small text-muted mt-1">
+                        /check-in/{{ spot.id }}
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+}

@@ -31,4 +31,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import("./pages/check-in/check-in.component").then((m) => m.CheckInComponent),
   },
+  {
+    path: "qr",
+    loadComponent: () =>
+      import("./pages/qr/qr.component").then((m) => m.QrComponent),
+  },
 ]
