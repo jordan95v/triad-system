@@ -2,63 +2,14 @@ import { Component, signal, inject, OnInit } from "@angular/core"
 import { Router } from "@angular/router"
 import { FormsModule } from "@angular/forms"
 import { ParkingService, ParkingSpot } from "../../services/parking.service"
+import { NgClass } from "@angular/common"
+import Swal from "sweetalert2"
 
 @Component({
   selector: "app-parking-grid",
-  imports: [FormsModule],
-  template: `
-    <div>
-      <h2>Parking Overview</h2>
-      <button (click)="goToReserve()">New Reservation</button>
-
-      <div>
-        <label
-          >Date:
-          <input
-            type="date"
-            [ngModel]="selectedDate()"
-            (ngModelChange)="onDateChange($event)"
-        /></label>
-      </div>
-
-      @if (loading()) {
-        <p>Loading...</p>
-      } @else {
-        <table border="1" cellpadding="5">
-          @for (row of rows; track row) {
-            <tr>
-              <td>
-                <b>{{ row }}</b>
-              </td>
-              @for (spot of getSpotsByRow(row); track spot.id) {
-                <td
-                  [style.background-color]="spot.is_available ? '#90EE90' : '#FFB6C1'"
-                  [style.font-weight]="spot.is_electric ? 'bold' : 'normal'"
-                >
-                  {{ spot.id }}
-                </td>
-              }
-            </tr>
-          }
-        </table>
-        <p><small>Green=Available, Pink=Reserved, Bold=Electric</small></p>
-      }
-    </div>
-  `,
-  styles: [
-    `
-      div {
-        padding: 20px;
-      }
-      table {
-        margin-top: 10px;
-      }
-      td {
-        text-align: center;
-        min-width: 40px;
-      }
-    `,
-  ],
+  standalone: true,
+  imports: [FormsModule, NgClass],
+  templateUrl: "./parking-grid.component.html",
 })
 export class ParkingGridComponent implements OnInit {
   private readonly parkingService = inject(ParkingService)
@@ -87,7 +38,6 @@ export class ParkingGridComponent implements OnInit {
     this.loading.set(true)
     this.parkingService.getAvailableSpots(this.selectedDate()).subscribe({
       next: (availableSpots) => {
-        // Merge with full spots list to show reserved ones too
         this.parkingService.getSpots().subscribe({
           next: (allSpots) => {
             const availableIds = new Set(availableSpots.map((s) => s.id))
@@ -103,6 +53,56 @@ export class ParkingGridComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     })
+  }
+
+  quickReserve(spot: ParkingSpot): void {
+    if (!spot.is_available) return
+
+    const date = this.selectedDate()
+
+    Swal.fire({
+      title: "Reserve this spot?",
+      html: `<div>Spot <b>#${spot.id}</b><br/>Date <b>${date}</b>${spot.is_electric ? "<br/><small>(Electric)</small>" : ""
+        }</div>`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Reserve",
+      cancelButtonText: "Cancel",
+    }).then((res) => {
+      if (!res.isConfirmed) return
+
+      this.parkingService.createReservation(spot.id, date).subscribe({
+        next: async () => {
+          await Swal.fire({
+            icon: "success",
+            title: "Reserved!",
+            timer: 1100,
+            showConfirmButton: false,
+          })
+          this.loadSpots()
+        },
+        error: async (err) => {
+          await Swal.fire({
+            icon: "error",
+            title: "Reservation failed",
+            text: err?.error?.date[0] ? err?.error?.date[0] : "Server Error",
+          })
+          this.loadSpots()
+        },
+      })
+    })
+  }
+
+  onSpotClick(spot: ParkingSpot): void {
+    if (!spot.is_available) {
+      Swal.fire({
+        icon: "info",
+        title: "Not available",
+        text: `Spot #${spot.id} is already reserved for ${this.selectedDate()}.`,
+      })
+      return
+    }
+    this.quickReserve(spot)
   }
 
   getSpotsByRow(row: string): ParkingSpot[] {

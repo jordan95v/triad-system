@@ -1,0 +1,51 @@
+@if (auth.isLoggedIn()) {
+<header class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-semibold" routerLink="/parking">
+            Parking Reservation
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div id="mainNav" class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" routerLink="/parking" routerLinkActive="active"
+                        [routerLinkActiveOptions]="{ exact: true }">
+                        Parking
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" routerLink="/reserve" routerLinkActive="active">
+                        Reserve
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" routerLink="/my-reservations" routerLinkActive="active">
+                        My Reservations
+                    </a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge text-bg-secondary px-3 py-2">
+                    {{ auth.currentUser() }}
+                </span>
+
+                <button class="btn btn-outline-light" type="button" (click)="auth.logout()">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+}
+
+<main class="container py-4">
+    <router-outlet />
+</main>

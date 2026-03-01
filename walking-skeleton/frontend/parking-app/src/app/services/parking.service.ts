@@ -26,7 +26,7 @@ export interface Reservation {
 export class ParkingService {
   private readonly http = inject(HttpClient)
   private readonly auth = inject(AuthService)
-  private readonly baseUrl = "/api/v1"
+  private readonly baseUrl = "http://127.0.0.1:8000/api/v1"
 
   private getHeaders(): HttpHeaders {
     return new HttpHeaders(this.auth.getAuthHeader())
@@ -72,6 +72,14 @@ export class ParkingService {
   cancelReservation(id: number): Observable<{ status: string }> {
     return this.http.post<{ status: string }>(
       `${this.baseUrl}/reservations/${id}/cancel/`,
+      {},
+      { headers: this.getHeaders() }
+    )
+  }
+
+  restoreReservation(id: number) {
+    return this.http.post<{ status: string }>(
+      `${this.baseUrl}/reservations/${id}/restore/`,
       {},
       { headers: this.getHeaders() }
     )

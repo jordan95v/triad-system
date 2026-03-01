@@ -1,0 +1,56 @@
+<div class="container py-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h2 class="mb-1">Parking Overview</h2>
+            <div class="text-muted small">Green = Available · Red = Reserved · Bold = Electric</div>
+        </div>
+
+        <button class="btn btn-primary" type="button" (click)="goToReserve()">
+            New Reservation
+        </button>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body d-flex flex-wrap align-items-center gap-3">
+            <label class="form-label mb-0 fw-semibold" for="dateInput">Date</label>
+            <input id="dateInput" class="form-control" style="max-width: 220px" type="date" [ngModel]="selectedDate()"
+                (ngModelChange)="onDateChange($event)" />
+        </div>
+    </div>
+
+    @if (loading()) {
+    <div class="d-flex align-items-center gap-2">
+        <div class="spinner-border" role="status" aria-hidden="true"></div>
+        <span>Loading...</span>
+    </div>
+    } @else {
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle text-center mb-2">
+            <tbody>
+                @for (row of rows; track row) {
+                <tr>
+                    <th scope="row" class="bg-light" style="width: 60px;">
+                        {{ row }}
+                    </th>
+
+                    @for (spot of getSpotsByRow(row); track spot.id) {
+                    <td>
+                        <button type="button" class="badge rounded-pill px-3 py-2 border-0"
+                            [ngClass]="spot.is_available ? 'text-bg-success' : 'text-bg-danger'"
+                            [class.fw-bold]="spot.is_electric" [class.opacity-50]="!spot.is_available"
+                            (click)="onSpotClick(spot)">
+                            {{ spot.id }}
+                        </button>
+                    </td>
+                    }
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="small text-muted">
+        Tip: electric spots are shown in <span class="fw-bold">bold</span>.
+    </div>
+    }
+</div>

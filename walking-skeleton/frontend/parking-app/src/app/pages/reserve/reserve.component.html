@@ -1,0 +1,90 @@
+<div class="container py-4" style="max-width: 720px;">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="mb-1">Reserve Parking Spot</h2>
+            <div class="text-muted small">Max 5 days in advance. Electric spots: rows A & F.</div>
+        </div>
+
+        <button class="btn btn-outline-secondary" type="button" (click)="goBack()">
+            Cancel
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form [formGroup]="reservationForm" (ngSubmit)="onSubmit()">
+                <!-- Date -->
+                <div class="mb-3">
+                    <label for="date" class="form-label fw-semibold">Date</label>
+                    <input id="date" class="form-control" type="date" formControlName="date" [min]="minDate()"
+                        [max]="maxDate()" />
+                    <div class="form-text">Choose a date between today and +5 days.</div>
+                </div>
+
+                <!-- Electric -->
+                <div class="form-check mb-3">
+                    <input id="elec" class="form-check-input" type="checkbox" formControlName="needsElectric" />
+                    <label class="form-check-label" for="elec">
+                        Electric spot needed
+                    </label>
+                </div>
+
+                <!-- Spot -->
+                <div class="mb-3">
+                    <label for="spot" class="form-label fw-semibold">Spot</label>
+
+                    @if (loadingSpots()) {
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+                        <span class="text-muted">Loading available spots…</span>
+                    </div>
+                    } @else {
+                    <select id="spot" class="form-select" formControlName="spotId">
+                        <option value="">-- Select --</option>
+                        @for (spot of availableSpots(); track spot.id) {
+                        <option [value]="spot.id">
+                            {{ spot.id }} @if (spot.is_electric) { (Electric) }
+                        </option>
+                        }
+                    </select>
+
+                    @if (!availableSpots().length) {
+                    <div class="alert alert-warning mt-2 mb-0">
+                        No spots available for this date/filter.
+                    </div>
+                    }
+                    }
+                </div>
+
+                <!-- Messages -->
+                @if (errorMessage()) {
+                <div class="alert alert-danger" role="alert">
+                    {{ errorMessage() }}
+                </div>
+                }
+
+                @if (successMessage()) {
+                <div class="alert alert-success" role="alert">
+                    {{ successMessage() }}
+                </div>
+                }
+
+                <!-- Actions -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit" [disabled]="reservationForm.invalid || submitting()">
+                        @if (submitting()) {
+                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                        Reserving...
+                        } @else {
+                        Reserve
+                        }
+                    </button>
+
+                    <button class="btn btn-outline-secondary" type="button" (click)="goBack()">
+                        Back
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

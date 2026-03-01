@@ -1,11 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  signal,
-  inject,
-  OnInit,
-  computed,
-} from "@angular/core"
+import { Component, signal, inject, OnInit, computed } from "@angular/core"
 import { Router } from "@angular/router"
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms"
 import { ParkingService, ParkingSpot } from "../../services/parking.service"
@@ -13,85 +6,9 @@ import { AuthService } from "../../services/auth.service"
 
 @Component({
   selector: "app-reserve",
+  standalone: true,
   imports: [ReactiveFormsModule],
-  template: `
-    <div>
-      <h2>Reserve Parking Spot</h2>
-
-      <form [formGroup]="reservationForm" (ngSubmit)="onSubmit()">
-        <div>
-          <label
-            >Date:
-            <input
-              type="date"
-              formControlName="date"
-              [min]="minDate()"
-              [max]="maxDate()"
-          /></label>
-        </div>
-
-        <div>
-          <label
-            ><input type="checkbox" formControlName="needsElectric" /> Electric spot
-            needed</label
-          >
-        </div>
-
-        <div>
-          <label
-            >Spot:
-            @if (loadingSpots()) {
-              <span>Loading...</span>
-            } @else {
-              <select formControlName="spotId">
-                <option value="">-- Select --</option>
-                @for (spot of availableSpots(); track spot.id) {
-                  <option [value]="spot.id">
-                    {{ spot.id }}
-                    @if (spot.is_electric) {
-                      (Electric)
-                    }
-                  </option>
-                }
-              </select>
-            }
-          </label>
-        </div>
-
-        @if (errorMessage()) {
-          <p style="color: red;">{{ errorMessage() }}</p>
-        }
-        @if (successMessage()) {
-          <p style="color: green;">{{ successMessage() }}</p>
-        }
-
-        <button type="submit" [disabled]="!reservationForm.valid || submitting()">
-          Reserve
-        </button>
-        <button type="button" (click)="goBack()">Cancel</button>
-      </form>
-
-      <p><small>Max 5 days in advance. Electric spots: rows A & F.</small></p>
-    </div>
-  `,
-  styles: [
-    `
-      div {
-        padding: 20px;
-      }
-      label {
-        display: block;
-        margin: 10px 0;
-      }
-      input,
-      select {
-        margin: 5px;
-      }
-      button {
-        margin: 5px;
-      }
-    `,
-  ],
+  templateUrl: "./reserve.component.html",
 })
 export class ReserveComponent implements OnInit {
   private readonly parkingService = inject(ParkingService)
@@ -99,9 +16,9 @@ export class ReserveComponent implements OnInit {
   private readonly router = inject(Router)
 
   readonly reservationForm = new FormGroup({
-    date: new FormControl(this.getTodayDate(), [Validators.required]),
-    needsElectric: new FormControl(false),
-    spotId: new FormControl("", [Validators.required]),
+    date: new FormControl(this.getTodayDate(), { nonNullable: true, validators: [Validators.required] }),
+    needsElectric: new FormControl(false, { nonNullable: true }),
+    spotId: new FormControl("", { nonNullable: true, validators: [Validators.required] }),
   })
 
   readonly availableSpots = signal<ParkingSpot[]>([])
@@ -127,17 +44,8 @@ export class ReserveComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Load spots when date changes
-    this.dateControl.valueChanges.subscribe(() => {
-      this.loadAvailableSpots()
-    })
-
-    // Load spots when electric filter changes
-    this.reservationForm.controls.needsElectric.valueChanges.subscribe(() => {
-      this.loadAvailableSpots()
-    })
-
-    // Load initial spots
+    this.dateControl.valueChanges.subscribe(() => this.loadAvailableSpots())
+    this.reservationForm.controls.needsElectric.valueChanges.subscribe(() => this.loadAvailableSpots())
     this.loadAvailableSpots()
   }
 
@@ -151,16 +59,16 @@ export class ReserveComponent implements OnInit {
     if (!date) return
 
     this.loadingSpots.set(true)
+    this.errorMessage.set("")
+
     this.parkingService.getAvailableSpots(date).subscribe({
       next: (spots) => {
-        let filtered = spots
-        if (this.reservationForm.controls.needsElectric.value) {
-          filtered = spots.filter((s) => s.is_electric)
-        }
+        const needsElec = this.reservationForm.controls.needsElectric.value
+        const filtered = needsElec ? spots.filter((s) => s.is_electric) : spots
+
         this.availableSpots.set(filtered)
         this.loadingSpots.set(false)
 
-        // Reset spot selection if not in available list
         const currentSpot = this.spotControl.value
         if (currentSpot && !filtered.find((s) => s.id === currentSpot)) {
           this.spotControl.setValue("")
@@ -176,8 +84,8 @@ export class ReserveComponent implements OnInit {
   onSubmit(): void {
     if (!this.reservationForm.valid) return
 
-    const spotId = this.spotControl.value!
-    const date = this.dateControl.value!
+    const spotId = this.spotControl.value
+    const date = this.dateControl.value
 
     this.submitting.set(true)
     this.errorMessage.set("")
@@ -188,16 +96,13 @@ export class ReserveComponent implements OnInit {
         this.successMessage.set(`✅ Successfully reserved spot ${spotId} for ${date}`)
         this.submitting.set(false)
 
-        // Redirect after 2 seconds
-        setTimeout(() => {
-          this.router.navigate(["/my-reservations"])
-        }, 2000)
+        setTimeout(() => this.router.navigate(["/my-reservations"]), 2000)
       },
       error: (err) => {
         this.submitting.set(false)
         const errorMsg =
-          err.error?.detail ||
-          err.error?.non_field_errors?.[0] ||
+          err?.error?.detail ||
+          err?.error?.non_field_errors?.[0] ||
           "Failed to create reservation"
         this.errorMessage.set(`❌ ${errorMsg}`)
       },

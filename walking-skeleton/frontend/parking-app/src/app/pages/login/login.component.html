@@ -1,0 +1,20 @@
+<div class="d-flex vh-100 align-items-center justify-content-center bg-light">
+    <div class="card shadow p-4" style="width: 350px;">
+        <h2 class="text-center mb-2">Parking Reservation</h2>
+        <p class="text-center text-muted mb-4">Select your role</p>
+
+        <div class="d-grid gap-2">
+            <button class="btn btn-success" (click)="loginAs('employee')">
+                👷 Employee
+            </button>
+
+            <button class="btn btn-warning" (click)="loginAs('manager')">
+                🧑‍💼 Manager
+            </button>
+
+            <button class="btn btn-primary" (click)="loginAs('secretary')">
+                🗂️ Secretary
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,50 +1,11 @@
 import { Component, signal, inject, OnInit } from "@angular/core"
 import { ParkingService, Reservation } from "../../services/parking.service"
+import Swal from "sweetalert2"
 
 @Component({
   selector: "app-my-reservations",
-  template: `
-    <div>
-      <h2>My Reservations</h2>
-
-      @if (loading()) {
-        <p>Loading...</p>
-      } @else if (reservations().length === 0) {
-        <p>No reservations</p>
-      } @else {
-        <table border="1" cellpadding="5">
-          <tr>
-            <th>Spot</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-          @for (reservation of reservations(); track reservation.id) {
-            <tr>
-              <td>{{ reservation.spot_id }}</td>
-              <td>{{ reservation.date }}</td>
-              <td>{{ getStatusLabel(reservation.status) }}</td>
-              <td>
-                @if (reservation.status === "CONFIRMED") {
-                  <button (click)="cancel(reservation)">Cancel</button>
-                }
-              </td>
-            </tr>
-          }
-        </table>
-      }
-    </div>
-  `,
-  styles: [
-    `
-      div {
-        padding: 20px;
-      }
-      table {
-        margin-top: 10px;
-      }
-    `,
-  ],
+  standalone: true,
+  templateUrl: "./my-reservations.component.html",
 })
 export class MyReservationsComponent implements OnInit {
   private readonly parkingService = inject(ParkingService)
@@ -67,6 +28,16 @@ export class MyReservationsComponent implements OnInit {
     })
   }
 
+  private getApiError(err: any): string {
+    return (
+      err?.error?.detail ||
+      err?.error?.non_field_errors?.[0] ||
+      err?.error?.error ||
+      (typeof err?.error === "string" ? err.error : "") ||
+      "Server error"
+    )
+  }
+
   getStatusLabel(status: string): string {
     switch (status) {
       case "CONFIRMED":
@@ -80,10 +51,71 @@ export class MyReservationsComponent implements OnInit {
     }
   }
 
-  cancel(reservation: Reservation): void {
+  async cancel(reservation: Reservation): Promise<void> {
+    const result = await Swal.fire({
+      title: "Cancel this reservation?",
+      text: `Spot #${reservation.spot_id} on ${reservation.date}`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, cancel",
+      cancelButtonText: "No",
+      reverseButtons: true,
+    })
+
+    if (!result.isConfirmed) return
+
     this.parkingService.cancelReservation(reservation.id).subscribe({
-      next: () => this.loadReservations(),
-      error: (err) => console.error("Cancel error:", err),
+      next: async () => {
+        await Swal.fire({
+          icon: "success",
+          title: "Cancelled",
+          timer: 1100,
+          showConfirmButton: false,
+        })
+        this.loadReservations()
+      },
+      error: async (err) => {
+        await Swal.fire({
+          icon: "error",
+          title: "Cancel failed",
+          text: this.getApiError(err),
+        })
+      },
+    })
+  }
+
+  async reReserve(reservation: Reservation): Promise<void> {
+    const result = await Swal.fire({
+      title: "Restore this reservation?",
+      text: `Spot #${reservation.spot_id} on ${reservation.date}`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Restore",
+    })
+
+    if (!result.isConfirmed) return
+
+    this.parkingService.restoreReservation(reservation.id).subscribe({
+      next: async () => {
+        await Swal.fire({
+          icon: "success",
+          title: "Reservation restored",
+          timer: 1200,
+          showConfirmButton: false,
+        })
+        this.loadReservations()
+      },
+      error: async (err) => {
+        await Swal.fire({
+          icon: "error",
+          title: "Restore failed",
+          text:
+            err?.error?.error ||
+            err?.error?.detail ||
+            "Spot is already reserved.",
+        })
+        this.loadReservations()
+      },
     })
   }
 }
