@@ -1,8 +1,11 @@
+from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from django.utils import timezone
+from rest_framework.response import Response
+from django.db import transaction, IntegrityError
+
+
 from .models import ParkingSpot, Reservation
 from .serializers import ParkingSpotSerializer, ReservationSerializer
 
@@ -80,3 +83,38 @@ class ReservationViewSet(viewsets.ModelViewSet):
         return Response(
             {"status": "already cancelled"}, status=status.HTTP_400_BAD_REQUEST
         )
+
+    @action(detail=True, methods=["post"])
+    def restore(self, request, pk=None):
+        reservation = self.get_object()
+
+        if reservation.status != "CANCELLED":
+            return Response(
+                {"error": "Only cancelled reservations can be restored."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            with transaction.atomic():
+                conflict = Reservation.objects.filter(
+                    spot=reservation.spot,
+                    date=reservation.date,
+                    status__in=["CONFIRMED", "CHECKED_IN"]
+                ).exists()
+
+                if conflict:
+                    return Response(
+                        {"error": "Spot is already reserved."},
+                        status=status.HTTP_409_CONFLICT,
+                    )
+
+                reservation.status = "CONFIRMED"
+                reservation.save()
+
+            return Response({"status": "restored"})
+
+        except IntegrityError:
+            return Response(
+                {"error": "Spot is already reserved."},
+                status=status.HTTP_409_CONFLICT,
+            )

@@ -1,7 +1,7 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.utils import timezone
-
+from django.db.models import Q
 
 class ParkingSpot(models.Model):
     """Parking spot model - 60 spots organized in 6 rows (A-F) x 10."""
@@ -55,8 +55,13 @@ class Reservation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ["spot", "date"]  # Prevent double booking
         ordering = ["-date", "spot"]
-
+        constraints = [
+            models.UniqueConstraint(
+                fields=["spot", "date"],
+                condition=Q(status__in=["CONFIRMED", "CHECKED_IN"]),
+                name="uniq_active_reservation_per_spot_per_day",
+            )
+        ]
     def __str__(self):
         return f"{self.user} - {self.spot} on {self.date} ({self.status})"
