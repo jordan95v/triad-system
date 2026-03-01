@@ -1,9 +1,18 @@
 from datetime import timedelta
+
 from django.utils import timezone
 from rest_framework import serializers
 
 from .models import ParkingSpot, Reservation
 
+ROLE_LIMIT_DAYS = {
+    "employee": 5,
+    "secretary": 30,
+    "manager": 60,
+}
+
+def _get_role(user) -> str:
+    return getattr(user, "role", "employee") if user and user.is_authenticated else "employee"
 
 class ParkingSpotSerializer(serializers.ModelSerializer):
     is_available = serializers.SerializerMethodField()
@@ -51,14 +60,19 @@ class ReservationSerializer(serializers.ModelSerializer):
         return value
 
     def validate_date(self, value):
-        today = timezone.now().date()
+        today = timezone.localdate()
 
         if value < today:
             raise serializers.ValidationError("Cannot reserve a spot in the past.")
 
-        max_date = today + timedelta(days=5)
+        role = _get_role(self.context["request"].user)
+        limit_days = ROLE_LIMIT_DAYS.get(role, 5)
+
+        max_date = today + timedelta(days=limit_days)
         if value > max_date:
-            raise serializers.ValidationError("Cannot reserve more than 5 days in advance.")
+            raise serializers.ValidationError(
+                f"Cannot reserve more than {limit_days} days in advance."
+            )
 
         return value
 
@@ -77,6 +91,21 @@ class ReservationSerializer(serializers.ModelSerializer):
             if exists:
                 raise serializers.ValidationError(
                     f"Spot {spot.id} already reserved for {date} ({slot})."
+                )
+
+        user = self.context["request"].user
+        role = getattr(user, "role", "employee")
+
+        if role == "employee" and user.is_authenticated:
+            exists_user = Reservation.objects.filter(
+                user=user,
+                date=date,
+                slot=slot,
+                status__in=["CONFIRMED", "CHECKED_IN"],
+            ).exists()
+            if exists_user:
+                raise serializers.ValidationError(
+                    f"You already have a reservation for {date} ({slot})."
                 )
         return data
 

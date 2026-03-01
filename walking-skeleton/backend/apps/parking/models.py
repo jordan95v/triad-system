@@ -56,10 +56,10 @@ class Reservation(models.Model):
         ordering = ["-date", "slot", "spot"]
         constraints = [
             models.UniqueConstraint(
-                fields=["spot", "date", "slot"],
+                fields=["user", "date", "slot"],
                 condition=Q(status__in=["CONFIRMED", "CHECKED_IN"]),
-                name="uniq_active_reservation_per_spot_per_date_slot",
-            )
+                name="uniq_active_reservation_per_user_per_date_slot",
+            ),
         ]
 
     def __str__(self):
