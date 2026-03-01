@@ -29,14 +29,15 @@
 
                     <tbody>
                         @for (reservation of reservations(); track reservation.id) {
-                        <tr>
+                        <tr [class.table-warning]="reservation.status === 'EXPIRED'">
                             <td class="fw-semibold">#{{ reservation.spot_id }}</td>
                             <td>{{ reservation.date }}</td>
                             <td>{{ reservation.slot }}</td>
                             <td>
-                                <span class="badge" [class.text-bg-success]="reservation.status === 'CONFIRMED'"
-                                    [class.text-bg-primary]="reservation.status === 'CHECKED_IN'"
-                                    [class.text-bg-secondary]="reservation.status === 'CANCELLED'">
+                                <span class="badge" [class.text-bg-success]="reservation.status === 'CHECKED_IN'"
+                                    [class.text-bg-primary]="reservation.status === 'CONFIRMED'"
+                                    [class.text-bg-secondary]="reservation.status === 'CANCELLED'"
+                                    [class.text-bg-warning]="reservation.status === 'EXPIRED'">
                                     {{ getStatusLabel(reservation.status) }}
                                 </span>
                             </td>

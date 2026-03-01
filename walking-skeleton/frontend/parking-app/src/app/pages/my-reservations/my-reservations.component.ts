@@ -43,14 +43,16 @@ export class MyReservationsComponent implements OnInit {
       case "CONFIRMED":
         return "Confirmed"
       case "CHECKED_IN":
-        return "Checked-in"
+        return "Checked In"
       case "CANCELLED":
         return "Cancelled"
+      case "EXPIRED":
+        return "Expired (No check-in)"
       default:
         return status
     }
   }
-
+  
   async cancel(reservation: Reservation): Promise<void> {
     const result = await Swal.fire({
       title: "Cancel this reservation?",

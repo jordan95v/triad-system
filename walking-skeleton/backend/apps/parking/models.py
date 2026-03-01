@@ -34,6 +34,7 @@ class Reservation(models.Model):
         ("CONFIRMED", "Confirmed"),
         ("CHECKED_IN", "Checked In"),
         ("CANCELLED", "Cancelled"),
+        ("EXPIRED", "Expired (No check-in)"),
     ]
 
     SLOT_CHOICES = [("AM", "Morning"), ("PM", "Afternoon")]

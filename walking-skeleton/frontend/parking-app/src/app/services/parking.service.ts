@@ -20,7 +20,7 @@ export interface Reservation {
   spot_id: string
   date: string
   slot: Slot
-  status: "CONFIRMED" | "CHECKED_IN" | "CANCELLED"
+  status: "CONFIRMED" | "CHECKED_IN" | "CANCELLED" | "EXPIRED"
   check_in_time: string | null
   created_at: string
 }
