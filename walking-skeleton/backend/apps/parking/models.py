@@ -1,11 +1,9 @@
 from django.conf import settings
 from django.db import models
-from django.utils import timezone
 from django.db.models import Q
 
-class ParkingSpot(models.Model):
-    """Parking spot model - 60 spots organized in 6 rows (A-F) x 10."""
 
+class ParkingSpot(models.Model):
     ROW_CHOICES = [
         ("A", "Row A (Electric)"),
         ("B", "Row B"),
@@ -15,31 +13,30 @@ class ParkingSpot(models.Model):
         ("F", "Row F (Electric)"),
     ]
 
-    id = models.CharField(max_length=5, primary_key=True)  # e.g. "A01"
+    id = models.CharField(max_length=5, primary_key=True)
     row = models.CharField(max_length=1, choices=ROW_CHOICES)
     number = models.IntegerField()
     is_electric = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
-        # Auto-set electric for rows A and F
         self.is_electric = self.row in ["A", "F"]
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Spot {self.id}"
 
     class Meta:
         ordering = ["row", "number"]
 
+    def __str__(self):
+        return f"Spot {self.id}"
+
 
 class Reservation(models.Model):
-    """Reservation model for parking spots."""
-
     STATUS_CHOICES = [
         ("CONFIRMED", "Confirmed"),
         ("CHECKED_IN", "Checked In"),
         ("CANCELLED", "Cancelled"),
     ]
+
+    SLOT_CHOICES = [("AM", "Morning"), ("PM", "Afternoon")]
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reservations"
@@ -48,20 +45,21 @@ class Reservation(models.Model):
         ParkingSpot, on_delete=models.CASCADE, related_name="reservations"
     )
     date = models.DateField()
-    status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="CONFIRMED"
-    )
+    slot = models.CharField(max_length=2, choices=SLOT_CHOICES, default="AM")
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="CONFIRMED")
     check_in_time = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-date", "spot"]
+        ordering = ["-date", "slot", "spot"]
         constraints = [
             models.UniqueConstraint(
-                fields=["spot", "date"],
+                fields=["spot", "date", "slot"],
                 condition=Q(status__in=["CONFIRMED", "CHECKED_IN"]),
-                name="uniq_active_reservation_per_spot_per_day",
+                name="uniq_active_reservation_per_spot_per_date_slot",
             )
         ]
+
     def __str__(self):
-        return f"{self.user} - {self.spot} on {self.date} ({self.status})"
+        return f"{self.user} - {self.spot} on {self.date} {self.slot} ({self.status})"

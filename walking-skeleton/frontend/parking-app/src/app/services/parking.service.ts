@@ -11,22 +11,26 @@ export interface ParkingSpot {
   is_available: boolean
 }
 
+export type Slot = "AM" | "PM"
+
 export interface Reservation {
   id: number
   user: string
   spot: string
   spot_id: string
   date: string
+  slot: Slot
   status: "CONFIRMED" | "CHECKED_IN" | "CANCELLED"
   check_in_time: string | null
   created_at: string
 }
 
+
 @Injectable({ providedIn: "root" })
 export class ParkingService {
   private readonly http = inject(HttpClient)
   private readonly auth = inject(AuthService)
-  private readonly baseUrl = "http://127.0.0.1:8000/api/v1"
+  private readonly baseUrl = "/api/v1"
 
   private getHeaders(): HttpHeaders {
     return new HttpHeaders(this.auth.getAuthHeader())
@@ -38,27 +42,10 @@ export class ParkingService {
     })
   }
 
-  getAvailableSpots(date: string): Observable<ParkingSpot[]> {
-    return this.http.get<ParkingSpot[]>(
-      `${this.baseUrl}/spots/available/?date=${date}`,
-      {
-        headers: this.getHeaders(),
-      }
-    )
-  }
-
   getReservations(): Observable<Reservation[]> {
     return this.http.get<Reservation[]>(`${this.baseUrl}/reservations/`, {
       headers: this.getHeaders(),
     })
-  }
-
-  createReservation(spotId: string, date: string): Observable<Reservation> {
-    return this.http.post<Reservation>(
-      `${this.baseUrl}/reservations/`,
-      { spot: spotId, date },
-      { headers: this.getHeaders() }
-    )
   }
 
   checkIn(spotId: string): Observable<{ status: string; spot: string; user: string }> {
@@ -81,6 +68,22 @@ export class ParkingService {
     return this.http.post<{ status: string }>(
       `${this.baseUrl}/reservations/${id}/restore/`,
       {},
+      { headers: this.getHeaders() }
+    )
+  }
+
+
+  getAvailableSpots(date: string, slot: Slot): Observable<ParkingSpot[]> {
+    return this.http.get<ParkingSpot[]>(
+      `${this.baseUrl}/spots/available/?date=${date}&slot=${slot}`,
+      { headers: this.getHeaders() }
+    )
+  }
+
+  createReservation(spotId: string, date: string, slot: Slot): Observable<Reservation> {
+    return this.http.post<Reservation>(
+      `${this.baseUrl}/reservations/`,
+      { spot: spotId, date, slot },
       { headers: this.getHeaders() }
     )
   }

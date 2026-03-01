@@ -1,7 +1,7 @@
 import { Component, signal, inject, OnInit } from "@angular/core"
 import { Router } from "@angular/router"
 import { FormsModule } from "@angular/forms"
-import { ParkingService, ParkingSpot } from "../../services/parking.service"
+import { ParkingService, ParkingSpot, Slot } from "../../services/parking.service"
 import { NgClass } from "@angular/common"
 import Swal from "sweetalert2"
 
@@ -15,6 +15,7 @@ export class ParkingGridComponent implements OnInit {
   private readonly parkingService = inject(ParkingService)
   private readonly router = inject(Router)
 
+  readonly selectedSlot = signal<Slot>("AM")
   readonly rows = ["A", "B", "C", "D", "E", "F"]
   readonly spots = signal<ParkingSpot[]>([])
   readonly loading = signal(true)
@@ -34,9 +35,14 @@ export class ParkingGridComponent implements OnInit {
     this.loadSpots()
   }
 
+  onSlotChange(slot: Slot): void {
+    this.selectedSlot.set(slot)
+    this.loadSpots()
+  }
+
   private loadSpots(): void {
     this.loading.set(true)
-    this.parkingService.getAvailableSpots(this.selectedDate()).subscribe({
+    this.parkingService.getAvailableSpots(this.selectedDate(), this.selectedSlot()).subscribe({
       next: (availableSpots) => {
         this.parkingService.getSpots().subscribe({
           next: (allSpots) => {
@@ -59,6 +65,7 @@ export class ParkingGridComponent implements OnInit {
     if (!spot.is_available) return
 
     const date = this.selectedDate()
+    const slot = this.selectedSlot()
 
     Swal.fire({
       title: "Reserve this spot?",
@@ -71,12 +78,13 @@ export class ParkingGridComponent implements OnInit {
     }).then((res) => {
       if (!res.isConfirmed) return
 
-      this.parkingService.createReservation(spot.id, date).subscribe({
+      this.parkingService.createReservation(spot.id, date, slot).subscribe({
         next: async () => {
           await Swal.fire({
             icon: "success",
             title: "Reserved!",
             timer: 1100,
+            html: `<div>Spot <b>#${spot.id}</b><br/>Date <b>${date}</b><br/>Slot <b>${slot}</b>${spot.is_electric ? "<br/><small>(Electric)</small>" : ""}</div>`,
             showConfirmButton: false,
           })
           this.loadSpots()

@@ -1,7 +1,7 @@
 import { Component, signal, inject, OnInit, computed } from "@angular/core"
 import { Router } from "@angular/router"
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms"
-import { ParkingService, ParkingSpot } from "../../services/parking.service"
+import { ParkingService, ParkingSpot, Slot } from "../../services/parking.service"
 import { AuthService } from "../../services/auth.service"
 
 @Component({
@@ -17,6 +17,7 @@ export class ReserveComponent implements OnInit {
 
   readonly reservationForm = new FormGroup({
     date: new FormControl(this.getTodayDate(), { nonNullable: true, validators: [Validators.required] }),
+    slot: new FormControl<Slot>("AM", { nonNullable: true, validators: [Validators.required] }),
     needsElectric: new FormControl(false, { nonNullable: true }),
     spotId: new FormControl("", { nonNullable: true, validators: [Validators.required] }),
   })
@@ -45,6 +46,7 @@ export class ReserveComponent implements OnInit {
 
   ngOnInit(): void {
     this.dateControl.valueChanges.subscribe(() => this.loadAvailableSpots())
+    this.reservationForm.controls.slot.valueChanges.subscribe(() => this.loadAvailableSpots())
     this.reservationForm.controls.needsElectric.valueChanges.subscribe(() => this.loadAvailableSpots())
     this.loadAvailableSpots()
   }
@@ -56,12 +58,13 @@ export class ReserveComponent implements OnInit {
 
   private loadAvailableSpots(): void {
     const date = this.dateControl.value
+    const slot = this.reservationForm.controls.slot.value
     if (!date) return
 
     this.loadingSpots.set(true)
     this.errorMessage.set("")
 
-    this.parkingService.getAvailableSpots(date).subscribe({
+    this.parkingService.getAvailableSpots(date, slot).subscribe({
       next: (spots) => {
         const needsElec = this.reservationForm.controls.needsElectric.value
         const filtered = needsElec ? spots.filter((s) => s.is_electric) : spots
@@ -86,24 +89,21 @@ export class ReserveComponent implements OnInit {
 
     const spotId = this.spotControl.value
     const date = this.dateControl.value
+    const slot = this.reservationForm.controls.slot.value
 
     this.submitting.set(true)
     this.errorMessage.set("")
     this.successMessage.set("")
 
-    this.parkingService.createReservation(spotId, date).subscribe({
+    this.parkingService.createReservation(spotId, date, slot).subscribe({
       next: () => {
-        this.successMessage.set(`✅ Successfully reserved spot ${spotId} for ${date}`)
+        this.successMessage.set(`✅ Reserved spot ${spotId} for ${date} (${slot})`)
         this.submitting.set(false)
-
         setTimeout(() => this.router.navigate(["/my-reservations"]), 2000)
       },
       error: (err) => {
         this.submitting.set(false)
-        const errorMsg =
-          err?.error?.detail ||
-          err?.error?.non_field_errors?.[0] ||
-          "Failed to create reservation"
+        const errorMsg = err?.error?.detail || err?.error?.non_field_errors?.[0] || "Failed to create reservation"
         this.errorMessage.set(`❌ ${errorMsg}`)
       },
     })

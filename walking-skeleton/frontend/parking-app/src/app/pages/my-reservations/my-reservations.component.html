@@ -21,6 +21,7 @@
                         <tr>
                             <th>Spot</th>
                             <th>Date</th>
+                            <th>Slot</th>
                             <th>Status</th>
                             <th class="text-end"></th>
                         </tr>
@@ -31,7 +32,7 @@
                         <tr>
                             <td class="fw-semibold">#{{ reservation.spot_id }}</td>
                             <td>{{ reservation.date }}</td>
-
+                            <td>{{ reservation.slot }}</td>
                             <td>
                                 <span class="badge" [class.text-bg-success]="reservation.status === 'CONFIRMED'"
                                     [class.text-bg-primary]="reservation.status === 'CHECKED_IN'"

@@ -21,6 +21,15 @@
                     <div class="form-text">Choose a date between today and +5 days.</div>
                 </div>
 
+                <!-- Morrning/Afternoon -->
+                <div class="mb-3">
+                    <label for="slot" class="form-label fw-semibold">Slot</label>
+                    <select id="slot" class="form-select" formControlName="slot">
+                        <option value="AM">AM (Morning)</option>
+                        <option value="PM">PM (Afternoon)</option>
+                    </select>
+                </div>
+
                 <!-- Electric -->
                 <div class="form-check mb-3">
                     <input id="elec" class="form-check-input" type="checkbox" formControlName="needsElectric" />
